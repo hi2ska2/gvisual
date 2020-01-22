@@ -1,6 +1,6 @@
 // main.cc
 // Created     : 2020. 01. 20.
-// Last updated: 2020. 01. 20.
+// Last updated: 2020. 01. 22.
 
 #include "GVisual.h"
 
@@ -10,8 +10,6 @@
 #include <Qt3DRender>
 #include <Qt3DInput>
 #include <Qt3DLogic>
-#include <Qt3DExtras>
-#include <Qt3DAnimation>
 
 #include <iostream>
 
@@ -20,7 +18,7 @@ int main(int argc, char* argv[])
   std::cout << "****************************************************************************\n";
   std::cout << "***                              G-Visual                                ***\n";
   std::cout << "***                          Version E-2020.02                           ***\n";
-  std::cout << "***                       Compiled on 2020. 01. 20.                      ***\n";
+  std::cout << "***                       Compiled on 2020. 01. 22.                      ***\n";
   std::cout << "***                                                                      ***\n";
   std::cout << "***                             Written by                               ***\n";
   std::cout << "***                            Sung-Min Hong                             ***\n";
@@ -28,55 +26,45 @@ int main(int argc, char* argv[])
   
   QApplication app(argc, argv);
 
-  //GVisual gvisual;
-  //gvisual.show();
-
-  Qt3DExtras::Qt3DWindow* view = new Qt3DExtras::Qt3DWindow();
-  view->defaultFrameGraph()->setClearColor(QColor(QRgb(0x4d4d4f)));
-  QWidget* container = QWidget::createWindowContainer(view);
-  QSize screenSize = view->screen()->size();
-  container->setMinimumSize(QSize(200,100));
-  container->setMaximumSize(screenSize);
-
-  QWidget* widget = new QWidget;
-  QHBoxLayout* hLayout = new QHBoxLayout(widget);
-  QVBoxLayout* vLayout = new QVBoxLayout();
-  vLayout->setAlignment(Qt::AlignTop);
-  hLayout->addWidget(container, 1);
-  hLayout->addLayout(vLayout);
-
-  widget->setWindowTitle(QStringLiteral("G-Visual"));
-
+  Qt3DRender::QWindow view;
   Qt3DInput::QInputAspect* input = new Qt3DInput::QInputAspect;
-  view->registerAspect(input);
+  view.registerAspect(input);
 
+  // Root entity
   Qt3DCore::QEntity* rootEntity = new Qt3DCore::QEntity();
 
-  Qt3DRender::QCamera* cameraEntity = view->camera();
+  // Camera
+  Qt3DCore::QCamera* cameraEntity = view.defaultCamera();
 
   cameraEntity->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
-  cameraEntity->setPosition(QVector3D(0,0,20.0f));
-  cameraEntity->setUpVector(QVector3D(0, 1, 0));
+  cameraEntity->setPosition(QVector3D(10.0f, 10.0f, 0.0f));
+  cameraEntity->setUpVector(QVector3D(0, 0, 1));
   cameraEntity->setViewCenter(QVector3D(0, 0, 0));
+  input->setCamera(cameraEntity);
 
-  Qt3DCore::QEntity* lightEntity = new Qt3DCore::QEntity(rootEntity);
-  Qt3DRender::QPointLight* light = new Qt3DRender::QPointLight(lightEntity);
-  light->setColor("white");
-  light->setIntensity(1);
-  lightEntity->addComponent(light);
-  Qt3DCore::QTransform* lightTransform = new Qt3DCore::QTransform(lightEntity);
-  lightTransform->setTranslation(cameraEntity->position());
-  lightEntity->addComponent(lightTransform);
+  // Material
+  Qt3DRender::QMaterial* material = new Qt3DRender::QPhongMaterial(rootEntity);
 
-  Qt3DExtras::QFirstPersonCameraController* camController = new Qt3DExtras::QFirstPersonCameraController(rootEntity);
-  camController->setCamera(cameraEntity);
+  // Sphere  
+  Qt3DRender::QSphereMesh* sphereMesh = new Qt3DRender::QSphereMesh;
+  sphereMesh->setRadius(1.1); // 0.11 nm
+
+  Qt3DCore::QEntity* sphereEntity = new Qt3DCore::QEntity(rootEntity);
+  sphereEntity->addComponent(sphereMesh);
+  Qt3DCore::QTransform* sphereTransform = new Qt3DCore::QTransform;
+  sphereTransform->setTranslation(QVector3D(0.0f, 0.0f, 0.0f));
+  sphereEntity->addComponent(sphereTransform);
+  sphereEntity->addComponent(material);
   
-  //SceneModifier* modifier = new SceneModifier(rootEntity);
+  Qt3DCore::QEntity* sphereEntity1 = new Qt3DCore::QEntity(rootEntity);
+  sphereEntity1->addComponent(sphereMesh);
+  Qt3DCore::QTransform* sphereTransform1 = new Qt3DCore::QTransform;
+  sphereTransform1->setTranslation(QVector3D(1.3575f, 1.3575f, 1.3575f));
+  sphereEntity1->addComponent(sphereTransform1);
+  sphereEntity1->addComponent(material);
 
-  view->setRootEntity(rootEntity);
+  view.setRootEntity(rootEntity);
+  view.show();
 
-  //widget->show();
-  //widget->resize(1200, 800);
-  
   return app.exec();
 }
